@@ -1,0 +1,1 @@
+# Yosemite Wallet Flutter Plugin
