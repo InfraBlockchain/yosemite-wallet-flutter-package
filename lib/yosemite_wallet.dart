@@ -13,11 +13,19 @@ class YosemiteWallet {
     await _channel.invokeMethod('lock');
   }
 
-  static Future<void> unlock() async {
-    await _channel.invokeMethod('unlock');
+  static Future<void> unlock(String password) async {
+    await _channel.invokeMethod('unlock', {'password': password});
   }
 
   static Future<String> sign(String data) async {
     return await _channel.invokeMethod('sign', {'data': data});
+  }
+
+  static Future<String> getPublicKey() async {
+    return await _channel.invokeMethod('getPublicKey');
+  }
+
+  static Future<bool> isLocked() async {
+    return await _channel.invokeMethod('isLocked');
   }
 }

@@ -24,6 +24,9 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
     final static String TAG = "YosemiteWalletPlugin";
 
+    final static String ERROR_TYPE_OPERATION_NOT_FAILED = "OperationFailed";
+    final static String ERROR_TYPE_OPERATION_NOT_PERMITTED = "OperationNotPermitted";
+
     final static String DEFAULT_WALLET_DIR = "wallets";
     final static String DEFAULT_WALLET_NAME = "default";
 
@@ -62,6 +65,21 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         } else if (call.method.equals("sign")) {
             String data = call.argument("data");
             signData(data, result);
+        } else if (call.method.equals("getPublicKey")) {
+            if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
+                result.error(ERROR_TYPE_OPERATION_NOT_PERMITTED, "Wallet should be unlocked before calling this API", null);
+                return;
+            }
+
+            String pubKey = getPubKey();
+
+            if (pubKey != null) {
+                result.success(pubKey);
+            } else {
+                result.error(ERROR_TYPE_OPERATION_NOT_FAILED, "No public key found", null);
+            }
+        } else if (call.method.equals("isLocked")) {
+            isLocked(result);
         } else {
             result.notImplemented();
         }
@@ -103,10 +121,18 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         this.walletManager.lock(DEFAULT_WALLET_NAME);
     }
 
+    private void isLocked(Result result) {
+        if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
+            result.success(true);
+        } else {
+            result.success(false);
+        }
+    }
+
     private void signData(String data, Result result) {
 
         if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
-            result.error("OperationNotPermitted", "Wallet is locked", null);
+            result.error(ERROR_TYPE_OPERATION_NOT_PERMITTED, "Wallet is locked", null);
             return;
         }
 

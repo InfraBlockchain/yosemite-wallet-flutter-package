@@ -11,33 +11,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _pubKey = 'Unknown';
+  String state = 'Unknown';
 
   @override
   void initState() {
     super.initState();
-    //initPlatformState();
   }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-//  Future<void> initPlatformState() async {
-//    String platformVersion;
-//    // Platform messages may fail, so we use a try/catch PlatformException.
-//    try {
-//      platformVersion = await YosemiteWallet.platformVersion;
-//    } on PlatformException {
-//      platformVersion = 'Failed to get platform version.';
-//    }
-//
-//    // If the widget was removed from the tree while the asynchronous platform
-//    // message was in flight, we want to discard the reply rather than calling
-//    // setState to update our non-existent appearance.
-//    if (!mounted) return;
-//
-//    setState(() {
-//      _platformVersion = platformVersion;
-//    });
-//  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +28,49 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: Column(
             children: <Widget>[
+              Text(state),
               Container(
                 child: MaterialButton(
-                  onPressed: walletText,
+                  onPressed: createWallet,
                   child: Text('Create Wallet'),
                 ),
                 padding: const EdgeInsets.all(8.0),
               ),
-              Text(_pubKey)
+              Container(
+                child: MaterialButton(
+                  onPressed: checkWalletStatus,
+                  child: Text('Show wallet status'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
+              Container(
+                child: MaterialButton(
+                  onPressed: () => YosemiteWallet.lock(),
+                  child: Text('Lock the wallet'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
+              Container(
+                child: MaterialButton(
+                  onPressed: () => YosemiteWallet.unlock('wow'),
+                  child: Text('Unlock with correct password'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
+              Container(
+                child: MaterialButton(
+                  onPressed: () => YosemiteWallet.unlock('wow2'),
+                  child: Text('Unlock with incorrect password'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
+              Container(
+                child: MaterialButton(
+                  onPressed: signData,
+                  child: Text('Sign data'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
             ],
           ),
         ),
@@ -64,13 +78,27 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Future walletText() async {
+  Future createWallet() async {
     String pubKey = await YosemiteWallet.create("wow");
 
-    print('PubKey: $pubKey');
+    setState(() {
+      state = pubKey;
+    });
+  }
+
+  Future checkWalletStatus() async {
+    bool isLocked = await YosemiteWallet.isLocked();
 
     setState(() {
-      _pubKey = pubKey;
+      state = 'isLocked: ${isLocked.toString()}';
+    });
+  }
+
+  Future signData() async {
+    String signature = await YosemiteWallet.sign('arbitrary data');
+
+    setState(() {
+      state = 'Signature: $signature';
     });
   }
 }
