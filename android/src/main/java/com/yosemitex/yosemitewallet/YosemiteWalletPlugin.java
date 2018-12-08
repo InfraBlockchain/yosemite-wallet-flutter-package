@@ -106,12 +106,6 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
             this.walletManager.createWithPassword(DEFAULT_WALLET_NAME, password);
 
-            if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
-                Log.d(TAG, "Device is locked!");
-            } else {
-                Log.d(TAG, "Device is unlocked!");
-            }
-
             String pubKey = getPubKey();
 
             if (pubKey != null) {
