@@ -71,6 +71,13 @@ class _MyAppState extends State<MyApp> {
                 ),
                 padding: const EdgeInsets.all(8.0),
               ),
+              Container(
+                child: MaterialButton(
+                  onPressed: signTransaction,
+                  child: Text('Sign tx'),
+                ),
+                padding: const EdgeInsets.all(8.0),
+              ),
             ],
           ),
         ),
@@ -100,5 +107,19 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       state = 'Signature: $signature';
     });
+  }
+
+  Future signTransaction() async {
+
+    print('Before sign...');
+
+    String txToSign = '{"expiration":"2018-12-07T08:37:40.500","ref_block_num":0,"ref_block_prefix":0,"max_net_usage_word":0,"max_cpu_usage_ms":0,"delay_sec":0,"context_free_actions":[],"actions":[{"account":"yx.token","name":"transfer","authorization":[{"actor":"joepark1good","permission":"active"}],"data":"902865015e53157da090db57e1740df2e8030000000000000243524400000000902865015e53157d00"}],"transaction_extensions":[],"signatures":[],"context_free_data":[]}';
+
+    String chainId = '6376573815dbd2de2d9929027a94aeab3f6e60e87caa953f94ee701ac8425811';
+
+    String signedTx = await YosemiteWallet.signTransaction(txToSign, chainId);
+
+    print('After sign...');
+    print(signedTx);
   }
 }
