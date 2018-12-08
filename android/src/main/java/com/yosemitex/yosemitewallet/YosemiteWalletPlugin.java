@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.yosemitex.yosemitewalletlibrary.crypto.ec.EosPublicKey;
+import com.yosemitex.yosemitewalletlibrary.crypto.ec.YosPublicKey;
 import com.yosemitex.yosemitewalletlibrary.data.remote.model.chain.SignedTransaction;
 import com.yosemitex.yosemitewalletlibrary.data.remote.model.types.TypeChainId;
 import com.yosemitex.yosemitewalletlibrary.data.wallet.WalletManager;
@@ -150,7 +150,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
         String pubKey = getPubKey();
 
-        String signature = this.walletManager.signData(data.getBytes(StandardCharsets.UTF_8), new EosPublicKey(pubKey));
+        String signature = this.walletManager.signData(data.getBytes(StandardCharsets.UTF_8), new YosPublicKey(pubKey));
 
         result.success(signature);
     }
@@ -175,7 +175,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
         final SignedTransaction txToSign = gson.fromJson(stringifiedSignedTransaction, SignedTransaction.class);
 
-        final SignedTransaction signedTx = this.walletManager.signTransaction(txToSign, Arrays.asList(new EosPublicKey(getPubKey())), new TypeChainId(chainId));
+        final SignedTransaction signedTx = this.walletManager.signTransaction(txToSign, Arrays.asList(new YosPublicKey(getPubKey())), new TypeChainId(chainId));
 
         final String stringifiedSignedTx = gson.toJson(signedTx);
 
