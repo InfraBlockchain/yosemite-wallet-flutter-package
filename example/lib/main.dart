@@ -113,7 +113,7 @@ class _MyAppState extends State<MyApp> {
 
     print('Before sign...');
 
-    String txToSign = '{"expiration":"2018-12-07T08:37:40.500","ref_block_num":0,"ref_block_prefix":0,"max_net_usage_word":0,"max_cpu_usage_ms":0,"delay_sec":0,"context_free_actions":[],"actions":[{"account":"yx.token","name":"transfer","authorization":[{"actor":"joepark1good","permission":"active"}],"data":"902865015e53157da090db57e1740df2e8030000000000000243524400000000902865015e53157d00"}],"transaction_extensions":[],"signatures":[],"context_free_data":[]}';
+    String txToSign = '{"expiration":"2018-12-09T13:50:08.500","ref_block_num":6608152,"ref_block_prefix":2918192741,"max_net_usage_word":0,"max_cpu_usage_ms":0,"delay_sec":0,"context_free_actions":[],"actions":[{"account":"yx.token","name":"transfer","authorization":[{"actor":"joepark1good","permission":"active"}],"data":"902865015e53157da090db57e1740df2e8030000000000000243524400000000902865015e53157d00"}],"transaction_extensions":[[1001,"0000000000004048"],[1002,"90a7a60899abbca9"]],"signatures":[],"context_free_data":[]}';
 
     String chainId = '6376573815dbd2de2d9929027a94aeab3f6e60e87caa953f94ee701ac8425811';
 

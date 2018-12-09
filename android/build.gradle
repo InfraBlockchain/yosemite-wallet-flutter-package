@@ -35,5 +35,5 @@ android {
 }
 
 dependencies {
-    implementation 'com.yosemitex:yosemite-wallet:0.1.10'
+    implementation 'com.yosemitex:yosemite-wallet:0.1.11'
 }
