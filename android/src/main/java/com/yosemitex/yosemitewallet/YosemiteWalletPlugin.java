@@ -128,10 +128,15 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
     }
 
     private void isLocked(Result result) {
-        if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
+
+        try {
+            if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
+                result.success(true);
+            } else {
+                result.success(false);
+            }
+        } catch (Exception e) {
             result.success(true);
-        } else {
-            result.success(false);
         }
     }
 
