@@ -1,11 +1,22 @@
 import 'package:meta/meta.dart';
+import 'package:yosemite_wallet/models/typeName.dart';
+import 'package:yosemite_wallet/pack/packer.dart';
+import 'package:yosemite_wallet/pack/byteWriter.dart';
 
 @immutable
-class Authorization {
-  final String actor;
-  final String permission;
+class Authorization implements Packer {
+  final TypeName actor;
+  final TypeName permission;
 
-  Authorization(this.actor, this.permission);
+  Authorization(String actor, String permission)
+      : this.actor = TypeName(actor),
+        this.permission = TypeName(permission);
 
-  Map<String, dynamic> toJson() => {'actor': actor, 'permission': permission};
+  Map<String, dynamic> toJson() => {'actor': actor.toString(), 'permission': permission.toString()};
+
+  @override
+  void pack(ByteWriter byteWriter) {
+    actor.pack(byteWriter);
+    permission.pack(byteWriter);
+  }
 }

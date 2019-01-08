@@ -9,7 +9,7 @@ class Info {
   Info(this.chainId, this.headBlockId, this.headBlockTime);
 
   String addTimeAfterHeadBlockTimeByMin(var min) {
-    var headBlockTime = DateTime.parse(this.headBlockTime);
+    var headBlockTime = DateTime.parse(this.headBlockTime).toUtc();
     var newTime = headBlockTime.add(new Duration(minutes: min));
 
     return newTime.toIso8601String();

@@ -1,7 +1,12 @@
-import 'dart:core';
 import 'dart:typed_data';
 
-class ChainUtil {
+import 'package:yosemite_wallet/pack/packer.dart';
+import 'package:yosemite_wallet/pack/byteWriter.dart';
+
+class TypeName implements Packer {
+  Uint8List _value;
+  String _name;
+
   static final String AccountNameChars = '.12345abcdefghijklmnopqrstuvwxyz';
 
   static final int MAX_NAME_IDX = 12;
@@ -21,12 +26,12 @@ class ChainUtil {
       return 0;
   }
 
-  static Uint8List getAccountNameInHex(final String accountName) {
-    if (accountName == null) {
+  static Uint8List getNameInHex(final String name) {
+    if (name == null) {
       return null;
     }
 
-    final int length = accountName.length;
+    final int length = name.length;
 
     var value = 0;
 
@@ -34,7 +39,7 @@ class ChainUtil {
       var c = 0;
 
       if (i < length) {
-        c = charToSymbol(accountName.codeUnitAt(i));
+        c = charToSymbol(name.codeUnitAt(i));
       }
 
       if (i < MAX_NAME_IDX) {
@@ -50,5 +55,24 @@ class ChainUtil {
     final list = Uint64List.fromList([value.toUnsigned(64)]);
 
     return Uint8List.view(list.buffer);
+  }
+
+  TypeName(String name) {
+    _name = name;
+    _value = getNameInHex(name);
+  }
+
+  String get name => _name;
+
+  Uint8List get nameInHex => _value;
+
+  @override
+  void pack(ByteWriter byteWriter) {
+    byteWriter.putUint8List(_value);
+  }
+
+  @override
+  toString() {
+    return _name;
   }
 }

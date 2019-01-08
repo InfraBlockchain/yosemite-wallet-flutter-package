@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -155,6 +156,8 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
     }
 
     private String getPubKey() {
+        this.walletManager.listKeysAsPairString();
+
         ArrayList<String> pubKeys = this.walletManager.listPubKeys();
 
         if (pubKeys.size() == 1) {

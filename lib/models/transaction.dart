@@ -1,6 +1,8 @@
 import 'package:yosemite_wallet/models/action.dart';
 import 'package:yosemite_wallet/models/transactionExtension.dart';
 import 'package:yosemite_wallet/models/transactionHeader.dart';
+import 'package:yosemite_wallet/models/typeName.dart';
+import 'package:yosemite_wallet/pack/byteWriter.dart';
 
 class Transaction extends TransactionHeader {
   List<Action> contextFreeActions;
@@ -20,6 +22,11 @@ class Transaction extends TransactionHeader {
     this.transactionExtensions.add(txEx);
   }
 
+  addStringTransactionExtension(int field, String value) {
+    TypeName typeName = TypeName(value);
+    this.transactionExtensions.add(TransactionExtension(field, typeName.nameInHex));
+  }
+
   @override
   Map<String, dynamic> toJson() {
     var json = super.toJson();
@@ -30,5 +37,14 @@ class Transaction extends TransactionHeader {
     });
 
     return json;
+  }
+
+  @override
+  pack(ByteWriter byteWriter) {
+    super.pack(byteWriter);
+
+    byteWriter.putPackerList(contextFreeActions);
+    byteWriter.putPackerList(actions);
+    byteWriter.putPackerList(transactionExtensions);
   }
 }

@@ -1,14 +1,16 @@
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
+import 'package:yosemite_wallet/pack/packer.dart';
+import 'package:yosemite_wallet/pack/byteWriter.dart';
 
-abstract class TransactionHeader {
-  String _expiration;
-  int _refBlockNum;
-  int _refBlockPrefix;
-  int _maxNetUsageWord;
-  int _maxCpuUsageMs;
-  int _delaySec;
+class TransactionHeader implements Packer {
+  String _expiration; // uint32_t
+  int _refBlockNum; // uint16_t
+  int _refBlockPrefix; // uint32_t
+  int _maxNetUsageWord; // fc:unsigned_int
+  int _maxCpuUsageMs; // uint8_t
+  int _delaySec; // fc:unsigned_int
 
   TransactionHeader()
       : this._refBlockNum = 0,
@@ -18,7 +20,7 @@ abstract class TransactionHeader {
         this._delaySec = 0;
 
   set expiration(String expiration) {
-    _expiration = expiration;
+    _expiration = expiration + 'Z';
   }
 
   set refBlockNum(int refBlockNum) {
@@ -60,5 +62,19 @@ abstract class TransactionHeader {
       'max_cpu_usage_ms': _maxCpuUsageMs,
       'delay_sec': _delaySec
     };
+  }
+
+  @override
+  pack(ByteWriter byteWriter) {
+    DateTime dateTime = DateTime.parse(_expiration);
+
+    var expirationInSec = dateTime.millisecondsSinceEpoch ~/ 1000;
+
+    byteWriter.putUint32(expirationInSec);
+    byteWriter.putUint16(_refBlockNum);
+    byteWriter.putUint32(_refBlockPrefix);
+    byteWriter.putVariableUint(_maxNetUsageWord);
+    byteWriter.putVariableUint(_maxCpuUsageMs);
+    byteWriter.putVariableUint(_delaySec);
   }
 }
