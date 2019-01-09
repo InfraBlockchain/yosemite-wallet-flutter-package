@@ -3,37 +3,39 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yosemite_wallet/models/action.dart';
 import 'package:yosemite_wallet/models/authorization.dart';
+import 'package:yosemite_wallet/models/signedTransaction.dart';
 import 'package:yosemite_wallet/models/transactionExtension.dart';
-import 'package:yosemite_wallet/models/typeName.dart';
-import 'package:yosemite_wallet/pack/byteWriter.dart';
 
 void main() {
   test('Byte writer test', () {
-    String headBlockId = '00b2e365f1519017104e87b28a533f8ab31fae16a3580b767e087ffbac50ca41';
-    String expiration = '2018-12-09T13:50:08.500';
 
-    ByteWriter byteWriter = ByteWriter(endian: Endian.little);
+    String expectedByteData =
+        '047316f411b2db9ba0f600fdbca8e3bbd224d82a367ff02fbd355bb0675288e32a84355cf0eaffafdd87000000000100800153419ab1c70000000000a531760100800153419ab1c700000000a8ed32322500800153419ab1c7902865015e53157d10270000000000000444555344000000047465737402e9030800800157219de8adea030800800153419ab1c70000000000000000000000000000000000000000000000000000000000000000';
 
-//    Action action = Action(
-//        account: 'yx.ntoken',
-//        name: 'transfer',
-//        authorization: [Authorization('useraccount1', 'active')],
-//        data: '902865015e53157da090db57e1740df2e8030000000000000243524400000000902865015e53157d00');
-//    action.pack(byteWriter);
+    String chainId = '047316f411b2db9ba0f600fdbca8e3bbd224d82a367ff02fbd355bb0675288e3';
+    String headBlockId = '001feaf0f02495bcffafdd87bc4d03021e592d78bd94e111854832da377f1858';
+    String expiration = '2019-01-09T05:18:34';
 
-//    TypeName typeName = TypeName('useraccount1');
-//    TransactionExtension tx = TransactionExtension(TransactionExtension.TransactionVoteAccount, typeName.nameInHex);
-//    tx.pack(byteWriter);
+    Action action = Action(
+        account: 'systoken.a',
+        name: 'issue',
+        authorization: [Authorization('systoken.a', 'active')],
+        data: '00800153419ab1c7902865015e53157d102700000000000004445553440000000474657374');
 
-    ByteData bd = byteWriter.done();
+    SignedTransaction signedTx = SignedTransaction();
 
-    print('ByteData:' + bd.buffer.lengthInBytes.toString());
-    Uint8List data = Uint8List.view(bd.buffer, 0, bd.lengthInBytes);
-    print('data:' + data.lengthInBytes.toString());
+    signedTx.expiration = expiration;
+    signedTx.referenceBlock = headBlockId;
+    signedTx.addAction(action);
+    signedTx.addStringTransactionExtension(
+        TransactionExtension.TransactionVoteAccount, 'producer.a');
+    signedTx.addStringTransactionExtension(
+        TransactionExtension.DelegatedTransactionFeePayer, 'systoken.a');
+
+    Uint8List bytes = signedTx.getDigestForSignature(chainId);
     final dataInHexStr =
-        data.fold('', (prev, elem) => '$prev${elem.toRadixString(16).padLeft(2, '0')}');
-    print(dataInHexStr);
-    final count = 1;
-    expect(count, 1);
+        bytes.fold('', (prev, elem) => '$prev${elem.toRadixString(16).padLeft(2, '0')}');
+    
+    expect(dataInHexStr, expectedByteData);
   });
 }

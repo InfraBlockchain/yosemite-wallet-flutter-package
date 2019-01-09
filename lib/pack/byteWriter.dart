@@ -83,6 +83,7 @@ class ByteWriter {
   void putPackerList<T extends Packer>(List<T> packers) {
     if (packers == null || packers.isEmpty) {
       putVariableUint(0);
+      return;
     }
 
     putVariableUint(packers.length);

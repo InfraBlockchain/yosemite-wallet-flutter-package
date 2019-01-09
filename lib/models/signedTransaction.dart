@@ -36,10 +36,14 @@ class SignedTransaction extends Transaction {
   void pack(ByteWriter byteWriter) {
     super.pack(byteWriter);
 
-    for (String data in this.contextFreeData) {
-      var dataAsBytes = hex.decode(data);
-      byteWriter.putVariableUint(dataAsBytes.length);
-      byteWriter.putUint8List(Uint8List.fromList(dataAsBytes));
+    if (this.contextFreeData.length <= 0) {
+      byteWriter.putUint8List(Uint8List(32));
+    } else {
+      for (String data in this.contextFreeData) {
+        var dataAsBytes = hex.decode(data);
+        byteWriter.putVariableUint(dataAsBytes.length);
+        byteWriter.putUint8List(Uint8List.fromList(dataAsBytes));
+      }
     }
   }
 }
