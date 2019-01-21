@@ -6,7 +6,8 @@ class Info {
   final String headBlockId;
   final String headBlockTime;
 
-  Info(this.chainId, this.headBlockId, this.headBlockTime);
+  Info(this.chainId, this.headBlockId, String headBlockTime)
+      : this.headBlockTime = headBlockTime + 'Z';
 
   String addTimeAfterHeadBlockTimeByMin(var min) {
     var headBlockTime = DateTime.parse(this.headBlockTime).toUtc();

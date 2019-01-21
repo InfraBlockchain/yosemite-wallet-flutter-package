@@ -20,7 +20,7 @@ class TransactionHeader implements Packer {
         this._delaySec = 0;
 
   set expiration(String expiration) {
-    _expiration = expiration + 'Z';
+    _expiration = expiration;
   }
 
   set refBlockNum(int refBlockNum) {

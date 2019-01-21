@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:typed_data/typed_buffers.dart';
-import 'package:yosemite_wallet/yosemite_wallet.dart';
+import 'package:yosemite_wallet/yosemite_chain.dart';
 
 void main() => runApp(MyApp());
 
@@ -98,6 +98,11 @@ class _MyAppState extends State<MyApp> {
   Future checkWalletStatus() async {
     bool isLocked = await YosemiteWallet.isLocked();
 
+    if (!isLocked) {
+      String pubKey = await YosemiteWallet.getPublicKey();
+      print(pubKey);
+    }
+
     setState(() {
       state = 'isLocked: ${isLocked.toString()}';
     });
@@ -113,15 +118,54 @@ class _MyAppState extends State<MyApp> {
 
   Future signTransaction() async {
 
-    print('Before sign...');
+    ChainService chainService = ChainService('http://testnet-sentinel.yosemitelabs.org:8888');
 
-    String txToSign = '{"expiration":"2018-12-09T13:50:08.500","ref_block_num":6608152,"ref_block_prefix":2918192741,"max_net_usage_word":0,"max_cpu_usage_ms":0,"delay_sec":0,"context_free_actions":[],"actions":[{"account":"yx.token","name":"transfer","authorization":[{"actor":"joepark1good","permission":"active"}],"data":"902865015e53157da090db57e1740df2e8030000000000000243524400000000902865015e53157d00"}],"transaction_extensions":[[1001,"0000000000004048"],[1002,"90a7a60899abbca9"]],"signatures":[],"context_free_data":[]}';
+    final String contract = 'systoken.a';
+    final String action = 'transfer';
+    final String myAccountName = 'useraccounti';
+    final String toAccountName = 'useraccounta';
+    final List<Authorization> authorizations = [Authorization(myAccountName, 'active')];
 
-    String chainId = '6376573815dbd2de2d9929027a94aeab3f6e60e87caa953f94ee701ac8425811';
+    var txData = {
+      't': contract,
+      'from': myAccountName,
+      'to': toAccountName,
+      'qty': '1.0000 DUSD',
+      'tag': 'test'
+    };
 
-    String signedTx = await YosemiteWallet.signTransaction(txToSign, chainId);
+    Future.wait([
+      chainService.getChainInfo(),
+      chainService.getAbi('yx.tokenabi', action, txData)
+    ]).then((List responses) {
+      final chainInfoRes = responses[0];
+      final abiRes = responses[1];
 
-    print('After sign...');
-    print(signedTx);
+      Action actionReq = Action(account: contract, name: action, authorization: authorizations, data: abiRes);
+
+      SignedTransaction txnBeforeSign = SignedTransaction();
+      txnBeforeSign.addAction(actionReq);
+      txnBeforeSign.addStringTransactionExtension(TransactionExtension.TransactionVoteAccount, 'producer.a');
+      txnBeforeSign.addStringTransactionExtension(TransactionExtension.DelegatedTransactionFeePayer, myAccountName);
+      txnBeforeSign.referenceBlock = chainInfoRes.headBlockId;
+      txnBeforeSign.expiration = chainInfoRes.addTimeAfterHeadBlockTimeByMin(10);
+
+      Uint8List packedBytesToSign = txnBeforeSign.getDigestForSignature(chainInfoRes.chainId);
+
+      final dataInHexStr =
+      packedBytesToSign.fold('', (prev, elem) => '$prev${elem.toRadixString(16).padLeft(2, '0')}');
+
+      print('Packed tx to sign: ' + dataInHexStr);
+
+      return YosemiteWallet.signMessageData(packedBytesToSign).then((signature) {
+        txnBeforeSign.addSignature(signature);
+        return txnBeforeSign;
+      });
+    }).then((SignedTransaction signedTx) {
+      // create a PackedTransaction
+      PackedTransaction packedTransaction = PackedTransaction(signedTx);
+      String stringifiedPackedTx = json.encode(packedTransaction.toJson());
+      print('Packed tx to push: ' + stringifiedPackedTx);
+    });
   }
 }

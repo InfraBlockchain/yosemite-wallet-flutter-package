@@ -20,6 +20,10 @@ class SignedTransaction extends Transaction {
     return json;
   }
 
+  void addSignature(String signature) {
+    this.signatures.add(signature);
+  }
+
   Uint8List getDigestForSignature(String chainId) {
     ByteWriter byteWriter = ByteWriter(endian: Endian.little);
 
@@ -30,6 +34,10 @@ class SignedTransaction extends Transaction {
     ByteData byteData = byteWriter.done();
     Uint8List bytes = Uint8List.view(byteData.buffer, 0, byteData.lengthInBytes);
     return bytes;
+  }
+
+  void packOnlyTransaction(ByteWriter byteWriter) {
+    super.pack(byteWriter);
   }
 
   @override
