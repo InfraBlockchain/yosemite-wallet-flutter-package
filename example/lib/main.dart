@@ -122,7 +122,7 @@ class _MyAppState extends State<MyApp> {
 
     final String contract = 'systoken.a';
     final String action = 'transfer';
-    final String myAccountName = 'useraccounti';
+    final String myAccountName = 'useraccountk';
     final String toAccountName = 'useraccounta';
     final List<Authorization> authorizations = [Authorization(myAccountName, 'active')];
 
