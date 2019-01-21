@@ -12,10 +12,8 @@ import com.yosemitex.yosemitewalletlibrary.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -70,9 +68,9 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
             unlock(pw);
         } else if (call.method.equals("lock")) {
             lock();
-        } else if (call.method.equals("sign")) {
-            String data = call.argument("data");
-            signData(data, result);
+        } else if (call.method.equals("signMessageData")) {
+            byte[] data = call.argument("data");
+            signMessageData(data, result);
         } else if (call.method.equals("signTx")) {
             String jsonStr = call.argument("txData");
             String chainId = call.argument("chainId");
@@ -141,8 +139,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         }
     }
 
-    private void signData(String data, Result result) {
-
+    private void signMessageData(byte[] data, Result result) {
         if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
             result.error(ERROR_TYPE_OPERATION_NOT_PERMITTED, "Wallet is locked", null);
             return;
@@ -150,7 +147,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
         String pubKey = getPubKey();
 
-        String signature = this.walletManager.signData(data.getBytes(StandardCharsets.UTF_8), new YosPublicKey(pubKey));
+        String signature = this.walletManager.signData(data, new YosPublicKey(pubKey));
 
         result.success(signature);
     }

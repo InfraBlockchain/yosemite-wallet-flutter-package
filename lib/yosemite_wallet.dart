@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
@@ -17,8 +18,8 @@ class YosemiteWallet {
     await _channel.invokeMethod('unlock', {'password': password});
   }
 
-  static Future<String> sign(String data) async {
-    return await _channel.invokeMethod('sign', {'data': data});
+  static Future<String> signMessageData(Uint8List data) async {
+    return await _channel.invokeMethod('signMessageData', {'data': data});
   }
 
   static Future<String> getPublicKey() async {

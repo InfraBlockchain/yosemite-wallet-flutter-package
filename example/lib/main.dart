@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:typed_data/typed_buffers.dart';
 import 'package:yosemite_wallet/yosemite_wallet.dart';
 
 void main() => runApp(MyApp());
@@ -66,8 +68,8 @@ class _MyAppState extends State<MyApp> {
               ),
               Container(
                 child: MaterialButton(
-                  onPressed: signData,
-                  child: Text('Sign data'),
+                  onPressed: signMessageData,
+                  child: Text('Sign message data'),
                 ),
                 padding: const EdgeInsets.all(8.0),
               ),
@@ -101,8 +103,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future signData() async {
-    String signature = await YosemiteWallet.sign('arbitrary data');
+  Future signMessageData() async {
+    String signature = await YosemiteWallet.signMessageData(Uint8List.fromList([0x01, 0x02, 0x03, 0x04]));
 
     setState(() {
       state = 'Signature: $signature';
