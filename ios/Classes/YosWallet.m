@@ -8,6 +8,7 @@
 
 #import "YosWallet.h"
 #import "YosPublicKey.h"
+#import "YOSData.h"
 #include "bignum.h"
 #include "ecdsa.h"
 #include "secp256r1.h"
@@ -23,10 +24,16 @@ NSString *const WalletErrorDomain = @"WalletErrorDomain";
 
 NSInteger const WalletErrorNoKeyPairFound = 100;
 
+NSString *const CredentialAccount = @"dytpalxlwlrkq";
+
+NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&UKnT$W%Wr?";
+
 @interface YosWallet()
 
 @property (nonatomic) SecKeyRef publicKeyRef;
 @property (nonatomic) SecKeyRef privateKeyRef;
+
+@property (nonatomic) BOOL isLocked;
 
 @end
 
@@ -43,7 +50,9 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
 }
 
 #pragma Private Methods
-- (bool)generateTouchIDKeyPair {
+
+- (bool)_generateTouchIDKeyPair {
+  
   CFErrorRef error = NULL;
   
   SecAccessControlRef sacObject = SecAccessControlCreateWithFlags(
@@ -56,10 +65,10 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
     NSLog(@"Generate key error: %@\n", error);
   }
   
-  return [self generateKeyPairWithAccessControlObject:sacObject];
+  return [self _generateKeyPairWithAccessControlObject:sacObject];
 }
 
-- (bool)generateKeyPairWithAccessControlObject:(SecAccessControlRef)accessControlRef {
+- (bool)_generateKeyPairWithAccessControlObject:(SecAccessControlRef)accessControlRef {
   CFMutableDictionaryRef accessControlDict = newCFDict;
   CFDictionaryAddValue(accessControlDict, kSecAttrAccessControl, accessControlRef);
   CFDictionaryAddValue(accessControlDict, kSecAttrIsPermanent, kCFBooleanTrue);
@@ -83,7 +92,7 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
   return YES;
 }
 
-- (SecKeyRef)lookupPrivateKeyRef {
+- (SecKeyRef)_lookupPrivateKeyRef {
   CFMutableDictionaryRef getPrivateKeyRef = newCFDict;
   CFDictionarySetValue(getPrivateKeyRef, kSecClass, kSecClassKey);
   CFDictionarySetValue(getPrivateKeyRef, kSecAttrKeyClass, kSecAttrKeyClassPrivate);
@@ -99,18 +108,91 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
   else if (status == errSecItemNotFound)
     return nil;
   else
-    [NSException raise:@"Unexpected OSStatus" format:@"Status: %i", (int)status];
+    [NSException raise:@"LookUpPrivateKeyException" format:@"Status: %i", (int)status];
   
   return nil;
 }
 
+- (void)_assertWalletUnlocked {
+  if (self.isLocked) {
+    [NSException raise:@"GetPublicKeyException" format:@"Wallet is locked"];
+  }
+}
+
+- (void)_addCredential:(NSString *)credential {
+  NSData *pwData = [[NSString stringWithFormat:@"%@%@", credential, Salt] dataUsingEncoding:NSUTF8StringEncoding];
+  
+  NSMutableData *pwHash = [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(pwData.bytes, (uint32_t)pwData.length, pwHash.mutableBytes);
+  
+  CFMutableDictionaryRef addCredentialQuery = newCFDict;
+  CFDictionarySetValue(addCredentialQuery, kSecClass, kSecClassGenericPassword);
+  CFDictionarySetValue(addCredentialQuery, kSecAttrAccount, (__bridge CFStringRef)CredentialAccount);
+  CFDictionarySetValue(addCredentialQuery, kSecValueData, pwHash.bytes);
+  
+  OSStatus status = SecItemAdd(addCredentialQuery, nil);
+  
+  YOSDataClear(pwData);
+  YOSDataClear(pwHash);
+  
+  if (status != errSecSuccess) {
+    [NSException raise:@"AddCredentialException" format:@"Status: %i", (int)status];
+  }
+}
+
+- (BOOL)_verifyCredential:(NSString *)credential {
+  
+  CFMutableDictionaryRef readCredentialQuery = newCFDict;
+  CFDictionarySetValue(readCredentialQuery, kSecClass, kSecClassGenericPassword);
+  CFDictionarySetValue(readCredentialQuery, kSecAttrAccount, (__bridge CFStringRef)CredentialAccount);
+  CFDictionarySetValue(readCredentialQuery, kSecMatchLimit, kSecMatchLimitOne);
+  CFDictionarySetValue(readCredentialQuery, kSecReturnAttributes, kCFBooleanTrue);
+  CFDictionarySetValue(readCredentialQuery, kSecReturnData, kCFBooleanTrue);
+  
+  CFTypeRef result;
+  
+  OSStatus status = SecItemCopyMatching(readCredentialQuery, &result);
+  
+  if (status != errSecSuccess)
+    [NSException raise:@"ReadCredentialException" format:@"Status: %i", (int)status];
+  
+  NSDictionary *resultDic = (__bridge NSDictionary *)result;
+  
+  NSData *readPwData = [resultDic objectForKey:(__bridge id)kSecValueData];
+  
+  NSData *pwData = [[NSString stringWithFormat:@"%@%@", credential, Salt] dataUsingEncoding:NSUTF8StringEncoding];
+  
+  NSMutableData *pwHash = [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(pwData.bytes, (uint32_t)pwData.length, pwHash.mutableBytes);
+  
+  BOOL success = NO;
+  
+  if ([pwHash isEqualToData:readPwData]) {
+    success = YES;
+  }
+  
+  YOSDataClear(pwData);
+  YOSDataClear(pwHash);
+  
+  return success;
+}
+
 #pragma Public Methods
+
+- (id)init {
+  if (self = [super init]) {
+    self.isLocked = YES;
+  }
+  
+  return self;
+}
+
 - (BOOL)loadWallet {
   if (self.privateKeyRef != nil && self.publicKeyRef != nil) {
     return YES;
   }
   
-  self.privateKeyRef = [self lookupPrivateKeyRef];
+  self.privateKeyRef = [self _lookupPrivateKeyRef];
   
   if (!self.privateKeyRef) {
     return NO;
@@ -121,12 +203,41 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
   return YES;
 }
 
-- (void)createWallet {
-  [self generateTouchIDKeyPair];
-  [self loadWallet];
+- (void)createWallet:(NSString *)password {
+  
+  @try {
+    [self _addCredential:password];
+    [self _generateTouchIDKeyPair];
+    [self loadWallet];
+  } @catch (NSException *exception) {
+    NSLog(@"%@", [exception reason]);
+  }
+}
+
+- (void)lock {
+  self.isLocked = YES;
+  
+  self.privateKeyRef = nil;
+  self.publicKeyRef = nil;
+}
+
+- (void)unlock:(NSString *)password {
+  @try {
+    if ([self _verifyCredential:password]) {
+      if (![self loadWallet]) {
+        [NSException raise:@"LoadingWalletException" format:@""];
+      }
+      
+      self.isLocked = NO;
+    }
+  } @catch (NSException *exception) {
+    NSLog(@"%@", [exception reason]);
+  }
 }
 
 - (NSString *)getPublicKey {
+  
+  [self _assertWalletUnlocked];
   
   SecKeyRef publicKeyRef = self.publicKeyRef;
   
@@ -147,6 +258,8 @@ NSInteger const WalletErrorNoKeyPairFound = 100;
 }
 
 - (void)sign:(NSData *)digest withCompletion:(void(^)(NSString *, NSError *)) completion {
+  
+  [self _assertWalletUnlocked];
   
   SecKeyRef privateKeyRef = self.privateKeyRef;
   SecKeyRef publicKeyRef = self.publicKeyRef;

@@ -24,11 +24,15 @@
   
   if ([@"create" isEqualToString:call.method]) {
     
-    if (![[YosWallet sharedManager] loadWallet]) {
-      [[YosWallet sharedManager] createWallet];
-    }
+    NSString *password = call.arguments[@"password"];
     
-    result([[YosWallet sharedManager] getPublicKey]);
+    @try {
+      [[YosWallet sharedManager] createWallet:password];
+    } @catch (NSException *exception) {
+      NSLog(@"%@", [exception reason]);
+    } @finally {
+      result([[YosWallet sharedManager] getPublicKey]);
+    }
   } else if ([@"getPublicKey" isEqualToString:call.method]) {
     result([[YosWallet sharedManager] getPublicKey]);
   } else if ([@"lock" isEqualToString:call.method]) {

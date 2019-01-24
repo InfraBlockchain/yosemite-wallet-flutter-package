@@ -10,10 +10,14 @@
 
 @interface YosWallet : NSObject
 
+@property (nonatomic, readonly) BOOL isLocked;
+
 + (id)sharedManager;
 
 - (BOOL)loadWallet;
-- (void)createWallet;
+- (void)createWallet:(NSString *)password;
+- (void)lock;
+- (void)unlock:(NSString *)password;
 - (NSString *)getPublicKey;
 - (void)sign:(NSData *)digest withCompletion:(void(^)(NSString *, NSError *)) completion;
 

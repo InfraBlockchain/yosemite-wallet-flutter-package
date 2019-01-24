@@ -8,13 +8,9 @@
   <component name="ChangeListManager">
     <list default="true" id="2029a1cb-f6d0-4520-af79-26e61938fed0" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/caches/build_file_checksums.ser" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/caches/build_file_checksums.ser" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/java/com/yosemitex/yosemitewallet/YosemiteWalletPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/com/yosemitex/yosemitewallet/YosemiteWalletPlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/example/lib/main.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ios/Classes/YosWallet.h" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/YosWallet.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ios/Classes/YosWallet.m" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/YosWallet.m" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ios/Classes/YosemiteWalletPlugin.m" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/YosemiteWalletPlugin.m" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/yosemite_wallet.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/yosemite_wallet.dart" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.dart_tool/" />
     <ignored path="$PROJECT_DIR$/.idea/" />
@@ -33,11 +29,11 @@
     <splitter split-orientation="horizontal" split-proportion="0.62327534">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="main.dart" pinned="false" current-in-tab="true">
+          <file leaf-file-name="main.dart" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/example/lib/main.dart">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="100">
-                  <caret line="118" column="19" lean-forward="true" selection-start-line="118" selection-start-column="19" selection-end-line="118" selection-end-column="19" />
+                <state relative-caret-position="40">
+                  <caret line="114" column="38" selection-start-line="114" selection-start-column="38" selection-end-line="114" selection-end-column="38" />
                   <folding>
                     <element signature="e#0#20#0" expanded="true" />
                   </folding>
@@ -45,11 +41,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="yosemite_wallet.dart" pinned="false" current-in-tab="false">
+          <file leaf-file-name="yosemite_wallet.dart" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/lib/yosemite_wallet.dart">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="345">
-                  <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+                <state relative-caret-position="210">
+                  <caret line="14" column="3" selection-start-line="14" selection-start-column="3" selection-end-line="14" selection-end-column="3" />
                   <folding>
                     <element signature="e#0#20#0" expanded="true" />
                   </folding>
@@ -205,8 +201,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="270" />
-    <option name="y" value="190" />
+    <option name="x" value="193" />
+    <option name="y" value="143" />
     <option name="width" value="1910" />
     <option name="height" value="1131" />
   </component>
@@ -363,7 +359,7 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="270" y="190" width="1910" height="1131" extended-state="0" />
+    <frame x="193" y="143" width="1910" height="1131" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="Android Profiler" order="7" show_stripe_button="false" />
@@ -764,20 +760,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/yosemite_wallet.dart">
+    <entry file="file://$PROJECT_DIR$/example/lib/main.dart">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+        <state relative-caret-position="40">
+          <caret line="114" column="38" selection-start-line="114" selection-start-column="38" selection-end-line="114" selection-end-column="38" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example/lib/main.dart">
+    <entry file="file://$PROJECT_DIR$/lib/yosemite_wallet.dart">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="100">
-          <caret line="118" column="19" lean-forward="true" selection-start-line="118" selection-start-column="19" selection-end-line="118" selection-end-column="19" />
+        <state relative-caret-position="210">
+          <caret line="14" column="3" selection-start-line="14" selection-start-column="3" selection-end-line="14" selection-end-column="3" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
           </folding>
