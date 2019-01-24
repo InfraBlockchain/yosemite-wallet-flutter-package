@@ -29,8 +29,4 @@ class YosemiteWallet {
   static Future<bool> isLocked() async {
     return await _channel.invokeMethod('isLocked');
   }
-
-  static Future<String> signTransaction(String txToSign, String chainId) async {
-    return await _channel.invokeMethod('signTx', {'txData': txToSign, 'chainId': chainId});
-  }
 }

@@ -10,11 +10,11 @@
 
 @interface YosWallet : NSObject
 
-+ (bool)generateTouchIDKeyPair;
-+ (bool)generateKeyPairWithAccessControlObject:(SecAccessControlRef)accessControlRef;
-+ (bool)savePublicKeyFromRef:(SecKeyRef)publicKeyRef;
-+ (SecKeyRef)lookupPublicKeyRef;
-+ (SecKeyRef)lookupPrivateKeyRef;
-+ (void)generateSignatureForData:(NSData *)inputData withCompletion:(void(^)(NSString *, NSError *)) completion;
++ (id)sharedManager;
+
+- (BOOL)loadWallet;
+- (void)createWallet;
+- (NSString *)getPublicKey;
+- (void)sign:(NSData *)digest withCompletion:(void(^)(NSString *, NSError *)) completion;
 
 @end

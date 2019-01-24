@@ -19,18 +19,37 @@
 #define kPrivateKeyName @"com.yosemitex.wallet.private"
 #define kPublicKeyName @"com.yosemitex.wallet.public"
 
+NSString *const WalletErrorDomain = @"WalletErrorDomain";
+
+NSInteger const WalletErrorNoKeyPairFound = 100;
+
+@interface YosWallet()
+
+@property (nonatomic) SecKeyRef publicKeyRef;
+@property (nonatomic) SecKeyRef privateKeyRef;
+
+@end
+
 @implementation YosWallet
 
-static SecKeyRef publicKeyRef;
-static SecKeyRef privateKeyRef;
++ (id)sharedManager {
+  static YosWallet *sharedYosWallet = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    sharedYosWallet = [[self alloc] init];
+  });
+  
+  return sharedYosWallet;
+}
 
-+ (bool)generateTouchIDKeyPair {
+#pragma Private Methods
+- (bool)generateTouchIDKeyPair {
   CFErrorRef error = NULL;
   
   SecAccessControlRef sacObject = SecAccessControlCreateWithFlags(
                                                                   kCFAllocatorDefault,
                                                                   kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-                                                                  kSecAccessControlTouchIDAny | kSecAccessControlPrivateKeyUsage,
+                                                                  kSecAccessControlPrivateKeyUsage,
                                                                   &error);
   
   if (error != errSecSuccess) {
@@ -40,7 +59,7 @@ static SecKeyRef privateKeyRef;
   return [self generateKeyPairWithAccessControlObject:sacObject];
 }
 
-+ (bool)generateKeyPairWithAccessControlObject:(SecAccessControlRef)accessControlRef {
+- (bool)generateKeyPairWithAccessControlObject:(SecAccessControlRef)accessControlRef {
   CFMutableDictionaryRef accessControlDict = newCFDict;
   CFDictionaryAddValue(accessControlDict, kSecAttrAccessControl, accessControlRef);
   CFDictionaryAddValue(accessControlDict, kSecAttrIsPermanent, kCFBooleanTrue);
@@ -48,97 +67,119 @@ static SecKeyRef privateKeyRef;
   
   CFMutableDictionaryRef generatePairRef = newCFDict;
   CFDictionaryAddValue(generatePairRef, kSecAttrTokenID, kSecAttrTokenIDSecureEnclave);
-  CFDictionaryAddValue(generatePairRef, kSecAttrKeyType, kSecAttrKeyTypeEC);
+  CFDictionaryAddValue(generatePairRef, kSecAttrKeyType, kSecAttrKeyTypeECSECPrimeRandom);
   CFDictionaryAddValue(generatePairRef, kSecAttrKeySizeInBits, (__bridge const void *)([NSNumber numberWithInt:256]));
   CFDictionaryAddValue(generatePairRef, kSecPrivateKeyAttrs, accessControlDict);
   
   CFErrorRef error = NULL;
   
-  privateKeyRef = SecKeyCreateRandomKey(generatePairRef, &error);
+  SecKeyCreateRandomKey(generatePairRef, &error);
   
-  publicKeyRef = SecKeyCopyPublicKey(privateKeyRef);
-  
-  [self savePublicKeyFromRef:publicKeyRef];
-  return YES;
-}
-
-+ (bool)savePublicKeyFromRef:(SecKeyRef)publicKeyRef {
-  CFTypeRef keyBits;
-  CFMutableDictionaryRef savePublicKeyDict = newCFDict;
-  CFDictionaryAddValue(savePublicKeyDict, kSecClass, kSecClassKey);
-  CFDictionaryAddValue(savePublicKeyDict, kSecAttrKeyType, kSecAttrKeyTypeEC);
-  CFDictionaryAddValue(savePublicKeyDict, kSecAttrKeyClass, kSecAttrKeyClassPublic);
-  CFDictionaryAddValue(savePublicKeyDict, kSecAttrApplicationTag, kPublicKeyName);
-  CFDictionaryAddValue(savePublicKeyDict, kSecValueRef, publicKeyRef);
-  CFDictionaryAddValue(savePublicKeyDict, kSecAttrIsPermanent, kCFBooleanTrue);
-  CFDictionaryAddValue(savePublicKeyDict, kSecReturnData, kCFBooleanTrue);
-  
-  OSStatus err = SecItemAdd(savePublicKeyDict, &keyBits);
-  if (err == errSecDuplicateItem) {
-    SecItemDelete(savePublicKeyDict);
+  if (error) {
+    NSLog(@"%@", (__bridge NSError *)error);
+    return NO;
   }
-  err = SecItemAdd(savePublicKeyDict, &keyBits);
   
   return YES;
 }
 
-+ (SecKeyRef)lookupPublicKeyRef {
-  
-  CFMutableDictionaryRef getPublicKeyQuery = newCFDict;
-  CFDictionarySetValue(getPublicKeyQuery, kSecClass,                kSecClassKey);
-  CFDictionarySetValue(getPublicKeyQuery, kSecAttrKeyType,          kSecAttrKeyTypeEC);
-  CFDictionarySetValue(getPublicKeyQuery, kSecAttrApplicationTag,   kPublicKeyName);
-  CFDictionarySetValue(getPublicKeyQuery, kSecAttrKeyClass,         kSecAttrKeyClassPublic);
-  CFDictionarySetValue(getPublicKeyQuery, kSecReturnData,           kCFBooleanTrue);
-  CFDictionarySetValue(getPublicKeyQuery, kSecReturnPersistentRef,  kCFBooleanTrue);
-  
-  OSStatus status = SecItemCopyMatching(getPublicKeyQuery, (CFTypeRef *)&publicKeyRef);
-  
-  if (status == errSecSuccess)
-    return (SecKeyRef)publicKeyRef;
-  else if (status == errSecItemNotFound)
-    return nil;
-  else
-    [NSException raise:@"Unexpected OSStatus" format:@"Status: %i", status];
-  return false;
-}
-
-+ (SecKeyRef)lookupPrivateKeyRef {
+- (SecKeyRef)lookupPrivateKeyRef {
   CFMutableDictionaryRef getPrivateKeyRef = newCFDict;
   CFDictionarySetValue(getPrivateKeyRef, kSecClass, kSecClassKey);
   CFDictionarySetValue(getPrivateKeyRef, kSecAttrKeyClass, kSecAttrKeyClassPrivate);
   CFDictionarySetValue(getPrivateKeyRef, kSecAttrLabel, kPrivateKeyName);
   CFDictionarySetValue(getPrivateKeyRef, kSecReturnRef, kCFBooleanTrue);
-  CFDictionarySetValue(getPrivateKeyRef, kSecUseOperationPrompt, @"autneticate to sign data");
+  
+  SecKeyRef privateKeyRef;
   
   OSStatus status = SecItemCopyMatching(getPrivateKeyRef, (CFTypeRef *)&privateKeyRef);
-  if (status == errSecItemNotFound)
-    return nil;
   
-  return (SecKeyRef)privateKeyRef;
+  if (status == errSecSuccess)
+    return privateKeyRef;
+  else if (status == errSecItemNotFound)
+    return nil;
+  else
+    [NSException raise:@"Unexpected OSStatus" format:@"Status: %i", (int)status];
+  
+  return nil;
 }
 
-+ (void)generateSignatureForData:(NSData *)inputData withCompletion:(void(^)(NSString *, NSError *)) completion {
+#pragma Public Methods
+- (BOOL)loadWallet {
+  if (self.privateKeyRef != nil && self.publicKeyRef != nil) {
+    return YES;
+  }
   
-  uint8_t digestData[CC_SHA256_DIGEST_LENGTH];
-  CC_SHA256(inputData.bytes, (uint32_t)inputData.length, digestData);
+  self.privateKeyRef = [self lookupPrivateKeyRef];
   
-  SecKeyRef _privateKeyRef = [self lookupPrivateKeyRef];
+  if (!self.privateKeyRef) {
+    return NO;
+  }
   
-  SecKeyRef _publicKeyRef = SecKeyCopyPublicKey(_privateKeyRef);
+  self.publicKeyRef = SecKeyCopyPublicKey(self.privateKeyRef);
+  
+  return YES;
+}
+
+- (void)createWallet {
+  [self generateTouchIDKeyPair];
+  [self loadWallet];
+}
+
+- (NSString *)getPublicKey {
+  
+  SecKeyRef publicKeyRef = self.publicKeyRef;
+  
+  if (publicKeyRef == nil) {
+    return nil;
+  }
   
   CFErrorRef error = NULL;
   
-  NSData *publicKeyData = (__bridge NSData *)SecKeyCopyExternalRepresentation(_publicKeyRef, &error);
+  NSData *publicKeyData = (__bridge NSData *)SecKeyCopyExternalRepresentation(publicKeyRef, &error);
+  
+  if (error) {
+    NSLog(@"%@", (__bridge NSError *)error);
+    return nil;
+  }
+  
+  return [[[YosPublicKey alloc] initWithPublicKeyData:publicKeyData] base58EncodedKey];
+}
+
+- (void)sign:(NSData *)digest withCompletion:(void(^)(NSString *, NSError *)) completion {
+  
+  SecKeyRef privateKeyRef = self.privateKeyRef;
+  SecKeyRef publicKeyRef = self.publicKeyRef;
+  
+  if (privateKeyRef == nil || publicKeyRef == nil) {
+    completion(nil, [NSError errorWithDomain:WalletErrorDomain code:WalletErrorNoKeyPairFound userInfo:nil]);
+    return;
+  }
+  
+  uint8_t digestDataByte[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(digest.bytes, (uint32_t)digest.length, digestDataByte);
+  
+  CFErrorRef error = NULL;
+  
+  NSData *publicKeyData = (__bridge NSData *)SecKeyCopyExternalRepresentation(publicKeyRef, &error);
+  
+  if (error) {
+    completion(nil, (__bridge NSError *)error);
+  }
   
   NSLog(@"Public key raw bits:\n%@", publicKeyData);
   
-  Boolean result = SecKeyIsAlgorithmSupported(_privateKeyRef, kSecKeyOperationTypeSign, kSecKeyAlgorithmECDSASignatureDigestX962SHA256);
+  Boolean result = SecKeyIsAlgorithmSupported(privateKeyRef, kSecKeyOperationTypeSign, kSecKeyAlgorithmECDSASignatureDigestX962SHA256);
   
-  NSData *digestData2 = [NSData dataWithData:(__bridge NSData *)CFDataCreate(NULL, (UInt8*)digestData, CC_SHA256_DIGEST_LENGTH)];
+  if (!result) {
+    completion(nil, nil);
+    return;
+  }
+  
+  NSData *digestData2 = [NSData dataWithData:(__bridge NSData *)CFDataCreate(NULL, (UInt8*)digestDataByte, CC_SHA256_DIGEST_LENGTH)];
   NSLog(@"digestData:%@", digestData2);
   
-  NSData *signature = (__bridge NSData *)SecKeyCreateSignature(_privateKeyRef, kSecKeyAlgorithmECDSASignatureDigestX962SHA256, CFDataCreate(NULL, (UInt8*)digestData, CC_SHA256_DIGEST_LENGTH), &error);
+  NSData *signature = (__bridge NSData *)SecKeyCreateSignature(privateKeyRef, kSecKeyAlgorithmECDSASignatureDigestX962SHA256, CFDataCreate(NULL, (UInt8*)digestDataByte, CC_SHA256_DIGEST_LENGTH), &error);
   
   uint8_t sig_asn1[64];
   
@@ -168,7 +209,7 @@ static SecKeyRef privateKeyRef;
   const uint8_t *pub_key_bytes = publicKeyData.bytes;
   uint8_t rec_pubkey[65];
   for (i = 0; i < 4; i++) {
-    ecdsa_recover_pub_from_sig(curve, rec_pubkey, sig_asn1, digestData, i);
+    ecdsa_recover_pub_from_sig(curve, rec_pubkey, sig_asn1, digestDataByte, i);
     
     NSLog(@"rec_pubkey:%@ with recId:%d", [NSData dataWithBytes:rec_pubkey length:65], i);
     
@@ -185,6 +226,16 @@ static SecKeyRef privateKeyRef;
     memset(compact_sig, (recId + 27 + 4), 1);
     memcpy(compact_sig + 1, sig_asn1, 64);
     completion([NSString stringWithFormat:@"SIG_R1_%@", [YosEcUtil encodeBase58CheckStringWithData:[NSData dataWithBytes:compact_sig length:65]]], nil);
+  }
+}
+
+- (void)dealloc {
+  if (self.privateKeyRef) {
+    CFRelease(self.privateKeyRef);
+  }
+  
+  if (self.publicKeyRef) {
+    CFRelease(self.publicKeyRef);
   }
 }
 

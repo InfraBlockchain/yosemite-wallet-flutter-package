@@ -131,7 +131,7 @@ class _MyAppState extends State<MyApp> {
       'from': myAccountName,
       'to': toAccountName,
       'qty': '1.0000 DUSD',
-      'tag': 'test'
+      'tag': 'This is the tx from Secure Enclave'
     };
 
     Future.wait([

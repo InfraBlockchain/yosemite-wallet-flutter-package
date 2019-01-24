@@ -5,15 +5,12 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.yosemitex.yosemitewalletlibrary.crypto.ec.YosPublicKey;
-import com.yosemitex.yosemitewalletlibrary.data.remote.model.chain.SignedTransaction;
-import com.yosemitex.yosemitewalletlibrary.data.remote.model.types.TypeChainId;
 import com.yosemitex.yosemitewalletlibrary.data.wallet.WalletManager;
 import com.yosemitex.yosemitewalletlibrary.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -71,11 +68,6 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         } else if (call.method.equals("signMessageData")) {
             byte[] data = call.argument("data");
             signMessageData(data, result);
-        } else if (call.method.equals("signTx")) {
-            String jsonStr = call.argument("txData");
-            String chainId = call.argument("chainId");
-
-            signTransaction(jsonStr, chainId, result);
         } else if (call.method.equals("getPublicKey")) {
             if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
                 result.error(ERROR_TYPE_OPERATION_NOT_PERMITTED, "Wallet should be unlocked before calling this API", null);
@@ -163,21 +155,5 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         }
 
         return null;
-    }
-
-    private void signTransaction(String stringifiedSignedTransaction, String chainId, Result result) {
-
-        if (this.walletManager.isLocked(DEFAULT_WALLET_NAME)) {
-            result.error(ERROR_TYPE_OPERATION_NOT_PERMITTED, "Wallet is locked", null);
-            return;
-        }
-
-        final SignedTransaction txToSign = gson.fromJson(stringifiedSignedTransaction, SignedTransaction.class);
-
-        final SignedTransaction signedTx = this.walletManager.signTransaction(txToSign, Arrays.asList(new YosPublicKey(getPubKey())), new TypeChainId(chainId));
-
-        final String stringifiedSignedTx = gson.toJson(signedTx);
-
-        result.success(stringifiedSignedTx);
     }
 }
