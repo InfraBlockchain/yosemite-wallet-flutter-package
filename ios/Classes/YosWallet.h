@@ -14,8 +14,8 @@
 
 + (id)sharedManager;
 
-- (BOOL)loadWallet;
-- (void)createWallet:(NSString *)password;
+- (BOOL)createWallet:(NSString *)password;
+- (void)deleteWallet;
 - (void)lock;
 - (void)unlock:(NSString *)password;
 - (NSString *)getPublicKey;

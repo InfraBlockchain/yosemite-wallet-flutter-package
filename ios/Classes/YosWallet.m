@@ -51,6 +51,22 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
 
 #pragma Private Methods
 
+- (BOOL)_loadWallet {
+  if (self.privateKeyRef != nil && self.publicKeyRef != nil) {
+    return YES;
+  }
+  
+  self.privateKeyRef = [self _lookupPrivateKeyRef];
+  
+  if (!self.privateKeyRef) {
+    return NO;
+  }
+  
+  self.publicKeyRef = SecKeyCopyPublicKey(self.privateKeyRef);
+  
+  return YES;
+}
+
 - (bool)_generateTouchIDKeyPair {
   
   CFErrorRef error = NULL;
@@ -113,6 +129,19 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   return nil;
 }
 
+- (void)_deletePrivateKey {
+  CFMutableDictionaryRef deletePrivateKeyRef = newCFDict;
+  CFDictionarySetValue(deletePrivateKeyRef, kSecClass, kSecClassKey);
+  CFDictionarySetValue(deletePrivateKeyRef, kSecAttrKeyClass, kSecAttrKeyClassPrivate);
+  CFDictionarySetValue(deletePrivateKeyRef, kSecAttrLabel, kPrivateKeyName);
+  CFDictionarySetValue(deletePrivateKeyRef, kSecReturnRef, kCFBooleanTrue);
+  
+  OSStatus status = SecItemDelete(deletePrivateKeyRef);
+  
+  if (status != errSecSuccess)
+    [NSException raise:@"DeletePrivateKeyException" format:@"Status: %i", (int)status];
+}
+
 - (void)_assertWalletUnlocked {
   if (self.isLocked) {
     [NSException raise:@"GetPublicKeyException" format:@"Wallet is locked"];
@@ -128,7 +157,7 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   CFMutableDictionaryRef addCredentialQuery = newCFDict;
   CFDictionarySetValue(addCredentialQuery, kSecClass, kSecClassGenericPassword);
   CFDictionarySetValue(addCredentialQuery, kSecAttrAccount, (__bridge CFStringRef)CredentialAccount);
-  CFDictionarySetValue(addCredentialQuery, kSecValueData, pwHash.bytes);
+  CFDictionarySetValue(addCredentialQuery, kSecValueData, (__bridge CFDataRef)pwHash);
   
   OSStatus status = SecItemAdd(addCredentialQuery, nil);
   
@@ -140,8 +169,7 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   }
 }
 
-- (BOOL)_verifyCredential:(NSString *)credential {
-  
+- (NSData *)_readCredential {
   CFMutableDictionaryRef readCredentialQuery = newCFDict;
   CFDictionarySetValue(readCredentialQuery, kSecClass, kSecClassGenericPassword);
   CFDictionarySetValue(readCredentialQuery, kSecAttrAccount, (__bridge CFStringRef)CredentialAccount);
@@ -153,17 +181,33 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   
   OSStatus status = SecItemCopyMatching(readCredentialQuery, &result);
   
+  if (status == errSecSuccess) {
+    NSDictionary *resultDic = (__bridge NSDictionary *)result;
+    return [resultDic objectForKey:(__bridge id)kSecValueData];
+  }
+  
+  return nil;
+}
+
+- (void)_deleteCredential {
+  CFMutableDictionaryRef deleteCredentialQuery = newCFDict;
+  CFDictionarySetValue(deleteCredentialQuery, kSecClass, kSecClassGenericPassword);
+  CFDictionarySetValue(deleteCredentialQuery, kSecAttrAccount, (__bridge CFStringRef)CredentialAccount);
+  
+  OSStatus status = SecItemDelete(deleteCredentialQuery);
+  
   if (status != errSecSuccess)
-    [NSException raise:@"ReadCredentialException" format:@"Status: %i", (int)status];
-  
-  NSDictionary *resultDic = (__bridge NSDictionary *)result;
-  
-  NSData *readPwData = [resultDic objectForKey:(__bridge id)kSecValueData];
+    [NSException raise:@"DeleteCredentialException" format:@"Status: %i", (int)status];
+}
+
+- (BOOL)_verifyCredential:(NSString *)credential {
   
   NSData *pwData = [[NSString stringWithFormat:@"%@%@", credential, Salt] dataUsingEncoding:NSUTF8StringEncoding];
   
   NSMutableData *pwHash = [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
   CC_SHA256(pwData.bytes, (uint32_t)pwData.length, pwHash.mutableBytes);
+  
+  NSData *readPwData = [self _readCredential];
   
   BOOL success = NO;
   
@@ -187,31 +231,36 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   return self;
 }
 
-- (BOOL)loadWallet {
-  if (self.privateKeyRef != nil && self.publicKeyRef != nil) {
-    return YES;
-  }
+- (BOOL)createWallet:(NSString *)password {
   
-  self.privateKeyRef = [self _lookupPrivateKeyRef];
-  
-  if (!self.privateKeyRef) {
+  if ([self _readCredential] != nil) {
     return NO;
   }
-  
-  self.publicKeyRef = SecKeyCopyPublicKey(self.privateKeyRef);
-  
-  return YES;
-}
-
-- (void)createWallet:(NSString *)password {
   
   @try {
     [self _addCredential:password];
     [self _generateTouchIDKeyPair];
-    [self loadWallet];
+    if ([self _loadWallet]) {
+      self.isLocked = NO;
+    }
   } @catch (NSException *exception) {
     NSLog(@"%@", [exception reason]);
+  } @finally {
+    if (self.isLocked) {
+      return NO;
+    } else {
+      return YES;
+    }
   }
+}
+
+- (void)deleteWallet {
+  [self _deleteCredential];
+  [self _deletePrivateKey];
+  
+  self.isLocked = YES;
+  self.privateKeyRef = nil;
+  self.publicKeyRef = nil;
 }
 
 - (void)lock {
@@ -224,7 +273,7 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
 - (void)unlock:(NSString *)password {
   @try {
     if ([self _verifyCredential:password]) {
-      if (![self loadWallet]) {
+      if (![self _loadWallet]) {
         [NSException raise:@"LoadingWalletException" format:@""];
       }
       

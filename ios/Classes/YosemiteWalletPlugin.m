@@ -27,20 +27,22 @@
     NSString *password = call.arguments[@"password"];
     
     @try {
+      [[YosWallet sharedManager] deleteWallet];
       [[YosWallet sharedManager] createWallet:password];
+      result([[YosWallet sharedManager] getPublicKey]);
     } @catch (NSException *exception) {
       NSLog(@"%@", [exception reason]);
-    } @finally {
-      result([[YosWallet sharedManager] getPublicKey]);
     }
   } else if ([@"getPublicKey" isEqualToString:call.method]) {
     result([[YosWallet sharedManager] getPublicKey]);
   } else if ([@"lock" isEqualToString:call.method]) {
-    
+    [[YosWallet sharedManager] lock];
   } else if ([@"unlock" isEqualToString:call.method]) {
-    
+    NSString *password = call.arguments[@"password"];
+    [[YosWallet sharedManager] unlock:password];
   } else if ([@"isLocked" isEqualToString:call.method]) {
-    
+    BOOL isLocked = [[YosWallet  sharedManager] isLocked];
+    result([NSNumber numberWithBool:isLocked]);
   } else if ([@"signMessageData" isEqualToString:call.method]) {
     FlutterStandardTypedData *bytes = call.arguments[@"data"];
     
