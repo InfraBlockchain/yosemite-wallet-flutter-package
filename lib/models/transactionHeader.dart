@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
-import 'package:yosemite_wallet/pack/packer.dart';
 import 'package:yosemite_wallet/pack/byteWriter.dart';
+import 'package:yosemite_wallet/pack/packer.dart';
 
 class TransactionHeader implements Packer {
   String _expiration; // uint32_t
@@ -55,7 +55,7 @@ class TransactionHeader implements Packer {
   @override
   Map<String, dynamic> toJson() {
     return {
-      'expiration': _expiration,
+      'expiration': _expiration.substring(0, _expiration.length - 1),
       'ref_block_num': _refBlockNum,
       'ref_block_prefix': _refBlockPrefix,
       'max_net_usage_word': _maxNetUsageWord,

@@ -31,55 +31,69 @@ class _MyAppState extends State<MyApp> {
           child: Column(
             children: <Widget>[
               Text(state),
-              Container(
-                child: MaterialButton(
-                  onPressed: createWallet,
-                  child: Text('Create Wallet'),
+              Expanded(
+                flex: 1,
+                child: ListView(
+                  children: <Widget>[
+                    Container(
+                      child: MaterialButton(
+                        onPressed: createWallet,
+                        child: Text('Create Wallet'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: deleteWallet,
+                        child: Text('Delete Wallet'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: checkWalletStatus,
+                        child: Text('Show wallet status'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: () => YosemiteWallet.lock(),
+                        child: Text('Lock the wallet'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: () => YosemiteWallet.unlock('wow'),
+                        child: Text('Unlock with correct password'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: () => YosemiteWallet.unlock('wow2'),
+                        child: Text('Unlock with incorrect password'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: signMessageData,
+                        child: Text('Sign message data'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                    Container(
+                      child: MaterialButton(
+                        onPressed: signTransaction,
+                        child: Text('Sign tx'),
+                      ),
+                      padding: const EdgeInsets.all(8.0),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: checkWalletStatus,
-                  child: Text('Show wallet status'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: () => YosemiteWallet.lock(),
-                  child: Text('Lock the wallet'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: () => YosemiteWallet.unlock('wow'),
-                  child: Text('Unlock with correct password'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: () => YosemiteWallet.unlock('wow2'),
-                  child: Text('Unlock with incorrect password'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: signMessageData,
-                  child: Text('Sign message data'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
-              Container(
-                child: MaterialButton(
-                  onPressed: signTransaction,
-                  child: Text('Sign tx'),
-                ),
-                padding: const EdgeInsets.all(8.0),
-              ),
+              )
             ],
           ),
         ),
@@ -95,21 +109,33 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future checkWalletStatus() async {
-    bool isLocked = await YosemiteWallet.isLocked();
-
-    if (!isLocked) {
-      String pubKey = await YosemiteWallet.getPublicKey();
-      print(pubKey);
-    }
+  Future deleteWallet() async {
+    await YosemiteWallet.delete();
 
     setState(() {
-      state = 'isLocked: ${isLocked.toString()}';
+      state = 'Wallet deleted';
     });
   }
 
+  Future checkWalletStatus() async {
+    bool isExist = await YosemiteWallet.isExist();
+
+    if (isExist) {
+      bool isLocked = await YosemiteWallet.isLocked();
+
+      setState(() {
+        state = 'isLocked: ${isLocked.toString()}';
+      });
+    } else {
+      setState(() {
+        state = 'Wallet doesn\'t exist';
+      });
+    }
+  }
+
   Future signMessageData() async {
-    String signature = await YosemiteWallet.signMessageData(Uint8List.fromList([0x01, 0x02, 0x03, 0x04]));
+    String signature =
+        await YosemiteWallet.signMessageData(Uint8List.fromList([0x01, 0x02, 0x03, 0x04]));
 
     setState(() {
       state = 'Signature: $signature';
@@ -117,7 +143,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future signTransaction() async {
-
     ChainService chainService = ChainService('http://testnet-sentinel.yosemitelabs.org:8888');
 
     final String contract = 'systoken.a';
@@ -134,26 +159,27 @@ class _MyAppState extends State<MyApp> {
       'tag': 'This is the tx from Secure Enclave'
     };
 
-    Future.wait([
-      chainService.getChainInfo(),
-      chainService.getAbi('yx.tokenabi', action, txData)
-    ]).then((List responses) {
+    Future.wait([chainService.getChainInfo(), chainService.getAbi('yx.tokenabi', action, txData)])
+        .then((List responses) {
       final chainInfoRes = responses[0];
       final abiRes = responses[1];
 
-      Action actionReq = Action(account: contract, name: action, authorization: authorizations, data: abiRes);
+      Action actionReq =
+          Action(account: contract, name: action, authorization: authorizations, data: abiRes);
 
       SignedTransaction txnBeforeSign = SignedTransaction();
       txnBeforeSign.addAction(actionReq);
-      txnBeforeSign.addStringTransactionExtension(TransactionExtension.TransactionVoteAccount, 'producer.a');
-      txnBeforeSign.addStringTransactionExtension(TransactionExtension.DelegatedTransactionFeePayer, myAccountName);
+      txnBeforeSign.addStringTransactionExtension(
+          TransactionExtension.TransactionVoteAccount, 'producer.a');
+      txnBeforeSign.addStringTransactionExtension(
+          TransactionExtension.DelegatedTransactionFeePayer, myAccountName);
       txnBeforeSign.referenceBlock = chainInfoRes.headBlockId;
       txnBeforeSign.expiration = chainInfoRes.addTimeAfterHeadBlockTimeByMin(10);
 
       Uint8List packedBytesToSign = txnBeforeSign.getDigestForSignature(chainInfoRes.chainId);
 
-      final dataInHexStr =
-      packedBytesToSign.fold('', (prev, elem) => '$prev${elem.toRadixString(16).padLeft(2, '0')}');
+      final dataInHexStr = packedBytesToSign.fold(
+          '', (prev, elem) => '$prev${elem.toRadixString(16).padLeft(2, '0')}');
 
       print('Packed tx to sign: ' + dataInHexStr);
 

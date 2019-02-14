@@ -79,6 +79,7 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   
   if (error != errSecSuccess) {
     NSLog(@"Generate key error: %@\n", error);
+    return NO;
   }
   
   return [self _generateKeyPairWithAccessControlObject:sacObject];
@@ -239,19 +240,34 @@ NSString *const Salt = @"1-I/P~XnXboGQ!jY(,{@a4uc)A!-sZz}2;[4|Fj*G.(?G4%;L?sEy&U
   
   @try {
     [self _addCredential:password];
-    [self _generateTouchIDKeyPair];
-    if ([self _loadWallet]) {
-      self.isLocked = NO;
+  } @catch (NSException *exception) {
+    return NO;
+  }
+  
+  @try {
+    if (![self _generateTouchIDKeyPair]) {
+      [self _deleteCredential];
     }
   } @catch (NSException *exception) {
+    [self _deleteCredential];
     NSLog(@"%@", [exception reason]);
-  } @finally {
-    if (self.isLocked) {
-      return NO;
-    } else {
-      return YES;
-    }
   }
+  
+  if ([self _loadWallet]) {
+    self.isLocked = NO;
+  } else {
+    self.isLocked = YES;
+  }
+  
+  return YES;
+}
+
+- (BOOL)isExistWallet {
+  if ([self _readCredential] != nil) {
+    return YES;
+  }
+  
+  return NO;
 }
 
 - (void)deleteWallet {

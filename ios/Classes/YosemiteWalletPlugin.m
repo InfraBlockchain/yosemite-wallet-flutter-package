@@ -27,12 +27,20 @@
     NSString *password = call.arguments[@"password"];
     
     @try {
-      [[YosWallet sharedManager] deleteWallet];
       [[YosWallet sharedManager] createWallet:password];
       result([[YosWallet sharedManager] getPublicKey]);
     } @catch (NSException *exception) {
       NSLog(@"%@", [exception reason]);
     }
+  } else if ([@"delete" isEqualToString:call.method]) {
+    @try {
+      [[YosWallet sharedManager] deleteWallet];
+    } @catch (NSException *exception) {
+      NSLog(@"%@", [exception reason]);
+    }
+  } else if ([@"isExist" isEqualToString:call.method]) {
+    BOOL isExist = [[YosWallet sharedManager] isExistWallet];
+    result([NSNumber numberWithBool:isExist]);
   } else if ([@"getPublicKey" isEqualToString:call.method]) {
     result([[YosWallet sharedManager] getPublicKey]);
   } else if ([@"lock" isEqualToString:call.method]) {

@@ -10,6 +10,14 @@ class YosemiteWallet {
     return await _channel.invokeMethod('create', {'password': password});
   }
 
+  static Future<bool> isExist() async {
+    return await _channel.invokeMethod('isExist');
+  }
+
+  static Future<bool> delete() async {
+    return await _channel.invokeMethod('delete');
+  }
+
   static Future<void> lock() async {
     await _channel.invokeMethod('lock');
   }
