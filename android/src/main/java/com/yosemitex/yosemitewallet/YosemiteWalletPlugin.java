@@ -60,6 +60,10 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         if (call.method.equals("create")) {
             String pw = call.argument("password");
             create(pw, result);
+        } else if (call.method.equals("delete")) {
+            delete();
+        } else if (call.method.equals("isExist")) {
+            result.success(isExist());
         } else if (call.method.equals("unlock")) {
             String pw = call.argument("password");
             unlock(pw);
@@ -90,24 +94,32 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
 
     private void create(String password, Result result) {
         try {
+            this.walletManager.open(DEFAULT_WALLET_NAME);
+        } catch (RuntimeException re) {
 
-            if (this.walletManager.openExistingsInDir() > 0) {
-                this.walletManager.deleteFile(DEFAULT_WALLET_NAME);
+            try {
+                this.walletManager.createWithPassword(DEFAULT_WALLET_NAME, password);
+
+                String pubKey = getPubKey();
+
+                if (pubKey != null) {
+                    result.success(pubKey);
+                } else {
+                    result.error("IllegalState", "Wallet is corrupted", null);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                result.error("IOException", "Error occurred while creating a wallet", null);
             }
-
-            this.walletManager.createWithPassword(DEFAULT_WALLET_NAME, password);
-
-            String pubKey = getPubKey();
-
-            if (pubKey != null) {
-                result.success(pubKey);
-            } else {
-                result.error("IllegalState", "Wallet is corrupted", null);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            result.error("IOException", "Error occurred while creating a wallet", null);
         }
+    }
+
+    private void delete() {
+        this.walletManager.deleteFile(DEFAULT_WALLET_NAME);
+    }
+
+    private boolean isExist() {
+        return this.walletManager.isWalletExist(DEFAULT_WALLET_NAME);
     }
 
     private void unlock(String password) {
