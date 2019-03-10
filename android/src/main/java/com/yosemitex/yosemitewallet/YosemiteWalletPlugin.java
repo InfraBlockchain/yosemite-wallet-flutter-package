@@ -69,6 +69,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
             unlock(pw);
         } else if (call.method.equals("lock")) {
             lock();
+            result.notImplemented();
         } else if (call.method.equals("signMessageData")) {
             byte[] data = call.argument("data");
             signMessageData(data, result);

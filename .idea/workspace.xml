@@ -6,14 +6,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2029a1cb-f6d0-4520-af79-26e61938fed0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/caches/build_file_checksums.ser" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/caches/build_file_checksums.ser" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/java/com/yosemitex/yosemitewallet/YosemiteWalletPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/com/yosemitex/yosemitewallet/YosemiteWalletPlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/yosemite_wallet.iml" beforeDir="false" afterPath="$PROJECT_DIR$/yosemite_wallet.iml" afterDir="false" />
-    </list>
+    <list default="true" id="2029a1cb-f6d0-4520-af79-26e61938fed0" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/.dart_tool/" />
     <ignored path="$PROJECT_DIR$/.idea/" />
     <ignored path="$PROJECT_DIR$/.pub/" />
@@ -153,8 +146,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="644" />
-    <option name="y" value="23" />
+    <option name="x" value="852" />
+    <option name="y" value="266" />
     <option name="width" value="1789" />
     <option name="height" value="1299" />
   </component>
@@ -328,7 +321,7 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="644" y="23" width="1789" height="1299" extended-state="0" />
+    <frame x="852" y="266" width="1789" height="1299" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="Android Profiler" order="7" show_stripe_button="false" />
@@ -341,7 +334,7 @@
       <window_info id="Designer" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Device File Explorer" order="3" side_tool="true" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39918366" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.39918366" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Messages" order="8" weight="0.06285714" />
       <window_info anchor="right" id="Palette&#9;" order="3" />
