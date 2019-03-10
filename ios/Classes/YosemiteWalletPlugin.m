@@ -31,12 +31,14 @@
       result([[YosWallet sharedManager] getPublicKey]);
     } @catch (NSException *exception) {
       NSLog(@"%@", [exception reason]);
+      result(nil);
     }
   } else if ([@"delete" isEqualToString:call.method]) {
     @try {
       [[YosWallet sharedManager] deleteWallet];
     } @catch (NSException *exception) {
       NSLog(@"%@", [exception reason]);
+      result(nil);
     }
   } else if ([@"isExist" isEqualToString:call.method]) {
     BOOL isExist = [[YosWallet sharedManager] isExistWallet];
@@ -45,9 +47,11 @@
     result([[YosWallet sharedManager] getPublicKey]);
   } else if ([@"lock" isEqualToString:call.method]) {
     [[YosWallet sharedManager] lock];
+    result(nil);
   } else if ([@"unlock" isEqualToString:call.method]) {
     NSString *password = call.arguments[@"password"];
     [[YosWallet sharedManager] unlock:password];
+    result(nil);
   } else if ([@"isLocked" isEqualToString:call.method]) {
     BOOL isLocked = [[YosWallet  sharedManager] isLocked];
     result([NSNumber numberWithBool:isLocked]);
