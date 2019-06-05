@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:yosemite_wallet/yosemite_chain.dart';
+import 'package:yosemite_wallet/yosemite_wallet.dart';
 
 void main() => runApp(MyApp());
 
