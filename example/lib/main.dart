@@ -111,10 +111,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future deleteWallet() async {
-    await YosemiteWallet.delete();
+    bool result = await YosemiteWallet.delete();
 
     setState(() {
-      state = 'Wallet deleted';
+      if (result) {
+        state = 'Wallet has been deleted';
+      } else {
+        state = 'Unable to delete';
+      }
     });
   }
 
