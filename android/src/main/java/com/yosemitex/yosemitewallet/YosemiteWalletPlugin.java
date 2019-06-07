@@ -53,6 +53,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         }
 
         walletManager.setDir(walletDir);
+        walletManager.open(DEFAULT_WALLET_NAME);
     }
 
     @Override
