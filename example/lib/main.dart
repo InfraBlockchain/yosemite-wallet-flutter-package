@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:yosemite_wallet/yosemite_chain.dart';
+import 'package:yosemite_wallet/yosemite_wallet.dart';
 
 void main() => runApp(MyApp());
 
@@ -110,10 +111,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future deleteWallet() async {
-    await YosemiteWallet.delete();
+    bool result = await YosemiteWallet.delete();
 
     setState(() {
-      state = 'Wallet deleted';
+      if (result) {
+        state = 'Wallet has been deleted';
+      } else {
+        state = 'Unable to delete';
+      }
     });
   }
 

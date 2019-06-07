@@ -53,6 +53,13 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         }
 
         walletManager.setDir(walletDir);
+
+        if (isExist()) {
+            walletManager.open(DEFAULT_WALLET_NAME);
+            Log.d(TAG, "Wallet opened");
+        } else {
+            Log.d(TAG, "Wallet does not exist yet");
+        }
     }
 
     @Override
@@ -61,8 +68,7 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
             String pw = call.argument("password");
             create(pw, result);
         } else if (call.method.equals("delete")) {
-            delete();
-            result.success(null);
+            delete(result);
         } else if (call.method.equals("isExist")) {
             result.success(isExist());
         } else if (call.method.equals("unlock")) {
@@ -117,8 +123,12 @@ public class YosemiteWalletPlugin implements MethodCallHandler {
         }
     }
 
-    private void delete() {
-        this.walletManager.deleteFile(DEFAULT_WALLET_NAME);
+    private void delete(Result result) {
+        try {
+            result.success(this.walletManager.deleteFile(DEFAULT_WALLET_NAME));
+        } catch (Exception e) {
+            result.error("NOT_ABLE_TO_COMPLETE", e.getMessage(), null);
+        }
     }
 
     private boolean isExist() {
